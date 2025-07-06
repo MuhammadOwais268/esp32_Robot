@@ -10,7 +10,7 @@ class AT_MOV {
 public:
   AT_MOV(Car &car, VLXReader &vlx);
   void begin();
-  void runAutonomous(int safeDistance, int speed, int duration = 10000); // Added duration parameter
+  void runAutonomous(int safeDistance, int speed, int duration = 10); // Added duration parameter
 
 private:
   Car* _car;
