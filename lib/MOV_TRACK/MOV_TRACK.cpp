@@ -1,57 +1,58 @@
 // MOV_TRACK.cpp
 #include "MOV_TRACK.h"
 
-MOV_TRACK::MOV_TRACK(VLXReader &reader) {
-  vlx = &reader;
-}
+MOV_TRACK::MOV_TRACK() : display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1) {}
 
 void MOV_TRACK::begin() {
-  // Nothing needed for now
-}
-
-String MOV_TRACK::getMoveName(CarMove move) {
-  switch (move) {
-    case MOVE_FORWARD: return "Forward";
-    case MOVE_BACKWARD: return "Backward";
-    case TURN_LEFT: return "Left";
-    case TURN_RIGHT: return "Right";
-    case MOVE_STOP: return "Stop";
-    default: return "Unknown";
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("OLED init failed"));
+    return;
   }
-}
-
-void MOV_TRACK::showDirection(CarMove move) {
-  Adafruit_SSD1306& display = vlx->getDisplay(); // getter in VLXReader
   display.clearDisplay();
-
-  // Display move name
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
+  display.display();
+}
+
+void MOV_TRACK::drawRadarGrid() {
+  display.clearDisplay();
+  display.drawCircle(64, 32, 30, SSD1306_WHITE); // Outer ring
+  display.drawCircle(64, 32, 20, SSD1306_WHITE); // Middle ring
+  display.drawCircle(64, 32, 10, SSD1306_WHITE); // Inner ring
+  display.drawLine(64, 0, 64, 64, SSD1306_WHITE); // Vertical
+  display.drawLine(0, 32, 128, 32, SSD1306_WHITE); // Horizontal
+}
+
+void MOV_TRACK::showRadar(int front, int back, int left, int right) {
+  drawRadarGrid();
+
+  // Map distance (max 300mm) to radius
+  int f = map(constrain(front, 0, 300), 0, 300, 2, 30);
+  int b = map(constrain(back, 0, 300), 0, 300, 2, 30);
+  int l = map(constrain(left, 0, 300), 0, 300, 2, 30);
+  int r = map(constrain(right, 0, 300), 0, 300, 2, 30);
+
+  // Dots: front (top), back (bottom), left, right
+  display.fillCircle(64, 32 - f, 2, SSD1306_WHITE); // Front
+  display.fillCircle(64, 32 + b, 2, SSD1306_WHITE); // Back
+  display.fillCircle(64 - l, 32, 2, SSD1306_WHITE); // Left
+  display.fillCircle(64 + r, 32, 2, SSD1306_WHITE); // Right
+
+  display.display();
+}
+
+void MOV_TRACK::showDirection(CarDirection dir) {
   display.setCursor(0, 0);
-  display.print("Move: ");
-  display.println(getMoveName(move));
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.fillRect(0, 0, 60, 10, SSD1306_BLACK);
 
-  // Draw direction arrow
-  int cx = SCREEN_WIDTH / 2;
-  int cy = SCREEN_HEIGHT / 2;
-
-  switch (move) {
-    case MOVE_FORWARD:
-      display.fillTriangle(cx, cy - 10, cx - 5, cy, cx + 5, cy, SSD1306_WHITE);
-      break;
-    case MOVE_BACKWARD:
-      display.fillTriangle(cx, cy + 10, cx - 5, cy, cx + 5, cy, SSD1306_WHITE);
-      break;
-    case TURN_LEFT:
-      display.fillTriangle(cx - 10, cy, cx, cy - 5, cx, cy + 5, SSD1306_WHITE);
-      break;
-    case TURN_RIGHT:
-      display.fillTriangle(cx + 10, cy, cx, cy - 5, cx, cy + 5, SSD1306_WHITE);
-      break;
-    case MOVE_STOP:
-      display.setCursor(cx - 10, cy);
-      display.print("STOP");
-      break;
+  switch (dir) {
+    case FORWARD: display.print("FWD"); break;
+    case BACKWARD: display.print("BACK"); break;
+    case LEFT: display.print("LEFT"); break;
+    case RIGHT: display.print("RIGHT"); break;
+    case STOPPED: default: display.print("STOP"); break;
   }
 
   display.display();

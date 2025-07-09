@@ -1,29 +1,23 @@
 // MOV_TRACK.h
-#ifndef MOV_TRACK_H
-#define MOV_TRACK_H
-
+#pragma once
 #include <Arduino.h>
-#include "VLXReader.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 #include "Car.h"
 
-enum CarMove {
-  MOVE_FORWARD,
-  MOVE_BACKWARD,
-  TURN_LEFT,
-  TURN_RIGHT,
-  MOVE_STOP
-};
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
 
 class MOV_TRACK {
 public:
-  MOV_TRACK(VLXReader &vlx);
+  MOV_TRACK();
   void begin();
-  void showDirection(CarMove move);
-  String getMoveName(CarMove move);
- 
+  void showRadar(int front, int back, int left, int right);
+  void showDirection(CarDirection dir);
 
 private:
-  VLXReader* vlx;
+  Adafruit_SSD1306 display;
+  void drawRadarGrid();
 };
 
-#endif
+

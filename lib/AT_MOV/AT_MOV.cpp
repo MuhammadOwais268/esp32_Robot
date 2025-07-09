@@ -31,30 +31,25 @@ void AT_MOV::setSpeed(int speed) {
 }
 
 void AT_MOV::avoidObstacle() {
+  Serial.println("Obstacle detected, avoiding...");
+  showDirection(MOVE_BACKWARD);
+  _car->backward(100); // Move backward to avoid obstacle
+  delay(1000);
   _car->stop();
-  delay(200);
-
-  if (random(0, 2) == 0) {
-    _car->turnLeft();
-    showDirection(TURN_LEFT);
-    Serial.println("Turning left to avoid obstacle.");
-  } else {
-    _car->turnRight();
-    showDirection(TURN_RIGHT);
-    Serial.println("Turning right to avoid obstacle.");
-  }
-
-  delay(400); // Turn for a short while
+   delay(500);
+  _car->turnLeft(80); // Turn left to avoid obstacle
+  showDirection(TURN_RIGHT);
+  Serial.println("Avoiding obstacle by turning right...");
+   delay(500); // Turn for a short while
   _car->stop();
-  delay(200);
+  delay(1000);
 }
 
 void AT_MOV::runAutonomous(int safeDistance, int speed, int duration) {
   setSpeed(speed);
   showDirection(MOVE_FORWARD);
   Serial.println("Starting moving in forward direction...");
-  delay(1000); // Initial delay to start moving
-  _car->forward();
+  _car->forward(speed);
 
   for(int i = 0; i < duration;  i++) { // Run for a limited time
     int distance = _vlx->getDistance();
@@ -65,10 +60,11 @@ void AT_MOV::runAutonomous(int safeDistance, int speed, int duration) {
       showDirection(MOVE_STOP);
       Serial.println("Obstacle detected, stopping car.");
       _car->stop();
+      delay(1000); // Wait for a moment before avoiding
       avoidObstacle();
       Serial.println("Starting moving in forward direction...");
-      delay(1000);
-      _car->forward();  // Resume after avoiding
+      _car->forward();
+      showDirection(MOVE_FORWARD);  // Resume after avoiding
     }
 
     delay(50);

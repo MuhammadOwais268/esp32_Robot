@@ -1,30 +1,40 @@
 #include <Arduino.h>
-#include <Car.h>
-#include <VLXReader.h>
-#include <MOV_TRACK.h>
-#include <AT_MOV.h>
+#include <Wire.h>
+#include "Car.h"
+#include "VLXReader.h"
+#include "MOV_TRACK.h"
+#include "TRACK_OBJ.h"
 
-// Define motor and sensor setup
-Car car(5, 18, 21, 33, 25, 26);  // IN1, IN2, IN3, IN4, ENA, ENB
-VLXReader vlx;
-MOV_TRACK tracker(vlx);
-AT_MOV AT(car, vlx);
+// === Motor Pins ===
+#define IN1 14
+#define IN2 18
+#define IN3 12
+#define IN4 5
+#define ENA 25
+#define ENB 26
 
-// Distance threshold in mm
-const int OBSTACLE_DISTANCE = 200;
+Car car(IN1, IN2, IN3, IN4, ENA, ENB);
+MOV_TRACK oledRadar;
+TRACK_OBJ tracker(car, oledRadar);
+
+// === VL53L0X Front Sensor Only ===
+VLXReader front; // Use default address or reassign manually
 
 void setup() {
   Serial.begin(9600);
+  Wire.begin();
+
   car.begin();
-  vlx.begin();
+  oledRadar.begin();
+
+  front.begin();  // Only use 1 sensor
+  tracker.attachSensorFront(&front);
   tracker.begin();
-   AT.begin();
+
+  Serial.println("Single-sensor object tracking started!");
 }
 
 void loop() {
-
-  AT.runAutonomous(OBSTACLE_DISTANCE, 150, 10); // Safe distance and speed
-  // Add a small delay to avoid flooding the serial output
-   delay(100);
-
+  tracker.trackObject(100, 400); // Will use only front sensor
+  delay(100);
 }
